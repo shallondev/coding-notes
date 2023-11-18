@@ -103,13 +103,35 @@ def add(request):
         if form.is_valid():
             form.task = cleaned_data["task"]
             tasks.append(task)
+            # Reverse engineer where the url "tasks:index" is lcoated and redirect the client.
+            return HttpResponseRedirect(reverse("tasks:index"))
         else:
             return render(request, "task/add.html", {
                 # Send old form as opposed to new to display errors to user!
                 "form": form 
             })
+    
+    else:
+        # If a "GET" request is sent render a new blank form.
+        return render(request, "tasks/add.html", {
+            "form": NewTaskForm()
+        })
 ```
 Server and client sided validation is important! The client could be operating on a older version of our application!
+
+A big issue in the form with django is that anyone will see the information posted. To fix this we can use sessions.
+```python
+def index(request):
+    # Checking if tasks are in session.
+    if "tasks" not in request.session["tasks"]
+    return render(request, "tasks/index.html", {
+        "tasks" : request.session["tasks"]
+    })
+```
+Note you must run python manage.py migrate or you will get a strange error.
+
+Make sure to add the task to session!
+task = form.cleaned_data["task"]
 
 #### urls.py
 
@@ -163,6 +185,15 @@ We can create lists in HTML by referencing lists created in our views.py
     {% endfor %}
 </ul>
 ```
+If we want to loop over a list but it is empty we can provide logic for HTML to follow.
+```HTML
+{% for task in tasks %}
+    <li>{{ task }}</li>
+{% empty %}
+    <li>No Task</li>
+{% endfor %}
+```
+
 It is bad practice to simply use a link to the exact folder navigate to other pages as Django simplifies the process of switching urls, meaning in future versions of our code the link may break.<br>
 Instead do this.
 ```HTML
